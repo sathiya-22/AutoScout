@@ -153,7 +153,7 @@ def format_html_email(ideas):
         return "<p>No new unique ideas found today.</p>"
         
     html = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; color: #333;">'
-    html += '<h2 style="color: #2E86AB; text-align: center;">🚀 Daily AI Idea Scout</h2>'
+    html += '<h2 style="color: #2E86AB; text-align: center;">🚀 AutoScout</h2>'
     html += '<p>Here are your 3 unique AI technical problems for today:</p>'
     
     for idx, idea in enumerate(ideas):
@@ -176,7 +176,7 @@ def send_email(html_content):
         params = {
             "from": "Scout <onboarding@resend.dev>",
             "to": ["sendilnathsathiya@gmail.com"],
-            "subject": f"Daily AI Idea Scout - {datetime.date.today()}",
+            "subject": f"AutoScout - {datetime.date.today()}",
             "html": html_content
         }
         email = resend.Emails.send(params)
@@ -187,7 +187,7 @@ def send_email(html_content):
         return False
 
 def main():
-    print(f"Starting Daily AI Idea Scout at {datetime.datetime.now()}...")
+    print(f"Starting AutoScout at {datetime.datetime.now()}...")
     
     if not all([GEMINI_API_KEY, TAVILY_API_KEY, RESEND_API_KEY]):
         print("Error: Missing required API keys in environment variables.")
