@@ -97,88 +97,55 @@ def save_seen_ideas(ideas):
         json.dump(list(set(seen)), f, indent=4)
 
 def validation_node(raw_data):
-    """Uses Gemini 2.5 Flash to validate problems, checks competitors, and formats them."""
-    print("Running validation phase...")
+    """Uses Gemini to batch-validate all problems and select the top 3."""
+    print("Running batch validation phase...")
     seen_ideas = load_seen_ideas()
     
     # Step 1: Extract 5 potential problems
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
         extraction_prompt = f"""
-        You are a Senior AI Agent Architect. Based on the following search results about AI technical challenges,
-        extract 5 highly specific, underserved, and high-friction technical problems.
-        Focus on Agent Orchestration, Contextual Drift, or RAG optimization constraints.
-        
-        Search Results:
+        Extract 5 unique, high-friction AI technical problems from these results:
         {raw_data}
-        
-        Output valid JSON exactly in this format:
-        [
-            {{
-                "problem_statement": "Concise 2-sentence description of the gap.",
-                "why_it_matters": "Why this is a valid/urgent problem right now.",
-                "solution_sketch": "A high-level technical approach using current AI tools.",
-                "search_keyword": "2-3 words representing the core concept to search on GitHub"
-            }}
-        ]
+        Return JSON list of objects with: problem_statement, why_it_matters, solution_sketch, search_keyword.
         """
         response = model.generate_content(extraction_prompt)
         text_resp = response.text.strip()
-        if text_resp.startswith("```json"):
-            text_resp = text_resp[7:-3]
-        elif text_resp.startswith("```"):
-            text_resp = text_resp[3:-3]
-            
+        if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
+        elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
         extracted_problems = json.loads(text_resp)
         
-        # Validate keys
-        required_keys = ["problem_statement", "why_it_matters", "solution_sketch", "search_keyword"]
-        valid_extracted = []
-        for p in extracted_problems:
-            if all(k in p for k in required_keys):
-                valid_extracted.append(p)
-        extracted_problems = valid_extracted
+        # Step 2: Collect competitor data for ALL candidates
+        candidate_data = []
+        for idx, p in enumerate(extracted_problems):
+            if p["problem_statement"] in seen_ideas: continue
+            print(f"Checking competitors for idea candidate {idx+1}...")
+            results = tavily_client.search(query=p["search_keyword"], search_depth="basic")
+            comp_context = ""
+            for r in results.get("results", []):
+                comp_context += f"- {r.get('title')}: {r.get('content')[:200]}\n"
+            candidate_data.append({"idea": p, "competitors": comp_context})
+
+        # Step 3: Single Gemini call to pick top 3
+        if not candidate_data: return []
+        
+        full_candidate_text = json.dumps(candidate_data, indent=2)
+        validation_prompt = f"""
+        You are a Senior AI Startup Validator. Analyze these candidates and their competitors:
+        {full_candidate_text}
+        
+        Pick the TOP 3 that are most unique and underserved technically.
+        Return ONLY a JSON list of the 3 chosen idea objects.
+        """
+        val_response = model.generate_content(validation_prompt)
+        text_resp = val_response.text.strip()
+        if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
+        elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
+        return json.loads(text_resp)[:3]
         
     except Exception as e:
-        print(f"Error in Gemini extraction: {e}")
+        print(f"Error in batch validation: {e}")
         return []
-        
-    valid_ideas = []
-    
-    # Step 2: Validate and check competitors
-    for idea in extracted_problems:
-        # Check against seen ideas (simple string match on the core problem)
-        if idea["problem_statement"] in seen_ideas:
-            print(f"Idea skipped (already seen): {idea['problem_statement'][:50]}...")
-            continue
-            
-        # Check GitHub for competitors
-        keyword = idea.get("search_keyword", idea["problem_statement"][:20])
-        competitor_status = competitor_check(keyword)
-        
-        # If no major competitor or it's weakly tackled, we might keep it.
-        validation_prompt = f"""
-        You are evaluating a startup idea for uniqueness.
-        Idea: {idea['problem_statement']}
-        Competitor Check Result: {competitor_status}
-        
-        Is this idea still powerfully valid and relatively underserved given the competitor check?
-        Answer 'YES' or 'NO'. If 'YES', explain briefly.
-        """
-        try:
-            val_response = model.generate_content(validation_prompt)
-            if "YES" in val_response.text.upper():
-                print(f"Idea valid! Keep: {idea['problem_statement'][:50]}...")
-                valid_ideas.append(idea)
-            else:
-                print(f"Idea discarded due to existing competition: {idea['problem_statement'][:50]}...")
-        except Exception as e:
-            print(f"Validation check failed: {e}")
-            
-        if len(valid_ideas) >= 3:
-            break
-            
-    return valid_ideas[:3]
 
 def format_html_email(ideas):
     """Formats the ideas into a beautiful HTML email."""
@@ -262,28 +229,25 @@ def main():
     batch_name = f"ai_scout_batch_{datetime.date.today().strftime('%Y_%m_%d')}"
     os.makedirs(batch_name, exist_ok=True)
     
-    # Process each idea
-    for idea in final_ideas:
-        try:
-            print(f"\n--- Building Idea: {idea['problem_statement'][:50]}... ---")
-            
-            # 1. Generate Boilerplate
-            folder = generate_boilerplate(idea, GEMINI_API_KEY)
-            
-            # 2. Move into batch folder
-            import shutil
+    # Batch Build: Generate all boilerplates in one request
+    try:
+        print(f"\n--- Batch Generating Project Files ---")
+        from builder import generate_batch_boilerplate
+        folders = generate_batch_boilerplate(final_ideas, GEMINI_API_KEY)
+        
+        import shutil
+        for folder in folders:
             target_path = os.path.join(batch_name, folder)
             if os.path.exists(target_path):
                 shutil.rmtree(target_path)
             shutil.move(folder, batch_name)
-                
-        except Exception as e:
-            send_failure_notification(f"Building Idea: {idea.get('problem_statement', 'Unknown')[:30]}", str(e))
+    except Exception as e:
+        send_failure_notification("Batch Building Phase", str(e))
 
     # Push the entire batch as one repository
     if GITHUB_TOKEN:
         try:
-            print(f"\n--- Creating Batch Repository: {batch_name} ---")
+            print(f"\n--- Creating/Updating Batch Repository: {batch_name} ---")
             repo_url = create_github_repo(batch_name, GITHUB_TOKEN)
             push_to_github(batch_name, repo_url, GITHUB_TOKEN)
         except Exception as e:
