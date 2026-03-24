@@ -2,7 +2,7 @@ import os
 import requests
 import subprocess
 
-def create_github_repo(repo_name, github_token):
+def create_github_repo(repo_name, github_token, description=""):
     """Creates a new public repository on GitHub."""
     url = "https://api.github.com/user/repos"
     headers = {
@@ -11,6 +11,7 @@ def create_github_repo(repo_name, github_token):
     }
     data = {
         "name": repo_name,
+        "description": description,
         "auto_init": False,
         "private": False # Change to True if needed
     }
