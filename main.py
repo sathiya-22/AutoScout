@@ -43,14 +43,23 @@ def research_node():
             include_raw_content=True
         )
         
+        if not response:
+            print("Tavily search returned empty response.")
+            return ""
+            
         # Extract the meaningful content from the results
         context = ""
         for idx, result in enumerate(response.get("results", [])):
-            context += f"Result {idx+1}:\nTitle: {result.get('title')}\nContent: {result.get('content')}\nRaw Content: {result.get('raw_content', '')[:1000]}\n\n"
+            title = result.get('title') or "Untitled"
+            content = result.get('content') or "No content available."
+            raw = (result.get('raw_content') or "")[:1000]
+            context += f"Result {idx+1}:\nTitle: {title}\nContent: {content}\nRaw Content: {raw}\n\n"
             
         return context
     except Exception as e:
         print(f"Error during Tavily search: {e}")
+        import traceback
+        traceback.print_exc()
         return ""
 
 def competitor_check(problem_keyword):
