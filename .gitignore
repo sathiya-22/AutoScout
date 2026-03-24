@@ -3,7 +3,7 @@ scout_venv/
 ai_scout_batch_*/
 .DS_Store
 .env
-seen_ideas.json
+# seen_ideas.json  <-- Removed from ignore to allow Action persistence
 
 .env
 __pycache__/
