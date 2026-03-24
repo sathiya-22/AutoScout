@@ -18,6 +18,14 @@ def create_github_repo(repo_name, github_token):
     response = requests.post(url, headers=headers, json=data)
     if response.status_code == 201:
         return response.json()["clone_url"]
+    elif response.status_code == 422 and "already exists" in response.text:
+        print(f"Repository {repo_name} already exists. Fetching existing URL...")
+        user_resp = requests.get("https://api.github.com/user", headers=headers)
+        if user_resp.status_code == 200:
+            login = user_resp.json()["login"]
+            return f"https://github.com/{login}/{repo_name}.git"
+        else:
+            raise Exception(f"Repo exists but failed to fetch user info: {user_resp.text}")
     else:
         raise Exception(f"Failed to create GitHub repo: {response.status_code} - {response.text}")
 
