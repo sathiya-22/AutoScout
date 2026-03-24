@@ -1,0 +1,5 @@
+google-generativeai
+tavily-python
+resend
+requests
+python-dotenv

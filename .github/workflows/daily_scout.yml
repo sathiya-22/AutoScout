@@ -1,0 +1,41 @@
+name: Daily AI Idea Scout
+
+on:
+  schedule:
+    # 09:00 IST is 03:30 UTC
+    - cron: '30 3 * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  run-scout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run AI Scout
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python main.py
+          
+      - name: Commit seen_ideas.json updates
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add seen_ideas.json
+          # Only commit if there are changes
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update seen_ideas.json [skip ci]" && git push)
