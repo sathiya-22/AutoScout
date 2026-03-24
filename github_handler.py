@@ -46,6 +46,12 @@ def push_to_github(folder_path, repo_url, github_token):
             ["git", "push", "-u", "origin", "main"]
         ]
         
+        # Check if there are any files to push
+        files = [f for f in os.listdir(folder_path) if not f.startswith('.')]
+        if not files:
+            print(f"Skipping push for {folder_path} - folder is empty.")
+            return
+            
         for cmd in commands:
             result = subprocess.run(cmd, cwd=folder_path, capture_output=True, text=True)
             if result.returncode != 0:

@@ -131,6 +131,14 @@ def validation_node(raw_data):
             
         extracted_problems = json.loads(text_resp)
         
+        # Validate keys
+        required_keys = ["problem_statement", "why_it_matters", "solution_sketch", "search_keyword"]
+        valid_extracted = []
+        for p in extracted_problems:
+            if all(k in p for k in required_keys):
+                valid_extracted.append(p)
+        extracted_problems = valid_extracted
+        
     except Exception as e:
         print(f"Error in Gemini extraction: {e}")
         return []
