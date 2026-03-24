@@ -29,6 +29,8 @@ def push_to_github(folder_path, repo_url, github_token):
         
         commands = [
             ["git", "init"],
+            ["git", "config", "user.email", "scout-bot@example.com"],
+            ["git", "config", "user.name", "Daily AI Scout Bot"],
             ["git", "add", "."],
             ["git", "commit", "-m", "Initial commit from Daily AI Builder"],
             ["git", "branch", "-M", "main"],
