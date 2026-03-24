@@ -1,4 +1,10 @@
 venv/
+scout_venv/
+ai_scout_batch_*/
+.DS_Store
+.env
+seen_ideas.json
+
 .env
 __pycache__/
 *.pyc
