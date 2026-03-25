@@ -1,6 +1,5 @@
 import os
 import json
-print("--- AutoScout Version 2.0.1 (Corrected API Keys) ---")
 import datetime
 import requests
 from dotenv import load_dotenv
@@ -57,7 +56,6 @@ def research_node():
             raw = (result.get('raw_content') or "")[:1000]
             context += f"Result {idx+1}:\nTitle: {title}\nContent: {content}\nRaw Content: {raw}\n\n"
             
-        print(f"Research phase complete. Context length: {len(context)}")
         return context
     except Exception as e:
         print(f"Error during Tavily search: {e}")
@@ -112,14 +110,13 @@ def validation_node(raw_data):
         Return JSON list of objects with: problem_statement, why_it_matters, solution_sketch, search_keyword.
         """
         response = client.models.generate_content(
-            model='gemini-2.0-flash', 
+            model='gemini-1.5-flash', 
             contents=extraction_prompt
         )
         text_resp = response.text.strip()
         if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
         elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
         extracted_problems = json.loads(text_resp)
-        print(f"Step 1 extraction complete. Identified {len(extracted_problems)} potential problems.")
         
         # Step 2: Collect competitor data for ALL candidates
         candidate_data = []
@@ -133,11 +130,7 @@ def validation_node(raw_data):
             candidate_data.append({"idea": p, "competitors": comp_context})
 
         # Step 3: Single Gemini call to pick top 3
-        if not candidate_data: 
-            print("No new unique candidates after filtering seen ideas.")
-            return []
-        
-        print(f"Proceeding to step 3 with {len(candidate_data)} candidates...")
+        if not candidate_data: return []
         
         full_candidate_text = json.dumps(candidate_data, indent=2)
         validation_prompt = f"""
@@ -148,17 +141,19 @@ def validation_node(raw_data):
         Return ONLY a JSON list of the 3 chosen idea objects.
         """
         val_response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=validation_prompt
         )
         text_resp = val_response.text.strip()
-        print(f"Step 3 validation complete. Raw response: {text_resp[:100]}...")
         if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
         elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
         return json.loads(text_resp)[:3]
         
     except Exception as e:
         print(f"Error in batch validation: {e}")
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            print("CRITICAL: Gemini API Quota Exhausted. Please wait or check your billing plan.")
+            raise e # Raise to notify main() of the critical failure
         return []
 
 def format_html_email(ideas):
@@ -238,7 +233,10 @@ def main():
             print("No valid, unique ideas discovered today.")
             return
     except Exception as e:
-        send_failure_notification("Validation Phase", str(e))
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            send_failure_notification("Validation Phase", "Gemini API Quota Exhausted (429)")
+        else:
+            send_failure_notification("Validation Phase", str(e))
         return
     
     # Create a batch directory for today's projects
@@ -250,7 +248,6 @@ def main():
         print(f"\n--- Batch Generating Project Files ---")
         from builder import generate_batch_boilerplate
         folders = generate_batch_boilerplate(final_ideas, GEMINI_API_KEY)
-        print(f"Batch generation complete. Created folders: {folders}")
         
         import shutil
         for folder in folders:
