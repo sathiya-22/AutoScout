@@ -3,22 +3,18 @@ import json
 import datetime
 import requests
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
 from tavily import TavilyClient
 import resend
-from builder import generate_boilerplate
 from github_handler import create_github_repo, push_to_github
 
 # Load environment variables
 load_dotenv()
 
-# Configure API Keys
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+    client = genai.Client(api_key=GEMINI_API_KEY)
+else:
+    client = None
 if TAVILY_API_KEY:
     tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
 if RESEND_API_KEY:
@@ -103,13 +99,15 @@ def validation_node(raw_data):
     
     # Step 1: Extract 5 potential problems
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
         extraction_prompt = f"""
         Extract 5 unique, high-friction AI technical problems from these results:
         {raw_data}
         Return JSON list of objects with: problem_statement, why_it_matters, solution_sketch, search_keyword.
         """
-        response = model.generate_content(extraction_prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash', 
+            contents=extraction_prompt
+        )
         text_resp = response.text.strip()
         if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
         elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
@@ -137,7 +135,10 @@ def validation_node(raw_data):
         Pick the TOP 3 that are most unique and underserved technically.
         Return ONLY a JSON list of the 3 chosen idea objects.
         """
-        val_response = model.generate_content(validation_prompt)
+        val_response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=validation_prompt
+        )
         text_resp = val_response.text.strip()
         if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
         elif text_resp.startswith("```"): text_resp = text_resp[3:-3]

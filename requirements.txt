@@ -1,4 +1,4 @@
-google-generativeai
+google-genai
 tavily-python
 resend
 requests

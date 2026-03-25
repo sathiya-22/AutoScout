@@ -1,14 +1,13 @@
 import os
 import json
-import google.generativeai as genai
+from google import genai
 
 def generate_batch_boilerplate(ideas, api_key):
     """Uses Gemini to generate files for multiple ideas in a single request."""
     if not ideas:
         return []
         
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    client = genai.Client(api_key=api_key)
     
     ideas_text = ""
     for idx, idea in enumerate(ideas):
@@ -29,7 +28,10 @@ def generate_batch_boilerplate(ideas, api_key):
     """
     
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt
+        )
         text_resp = response.text.strip()
         if text_resp.startswith("```json"):
             text_resp = text_resp[7:-3]
