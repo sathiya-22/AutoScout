@@ -57,6 +57,7 @@ def research_node():
             raw = (result.get('raw_content') or "")[:1000]
             context += f"Result {idx+1}:\nTitle: {title}\nContent: {content}\nRaw Content: {raw}\n\n"
             
+        print(f"Research phase complete. Context length: {len(context)}")
         return context
     except Exception as e:
         print(f"Error during Tavily search: {e}")
@@ -118,6 +119,7 @@ def validation_node(raw_data):
         if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
         elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
         extracted_problems = json.loads(text_resp)
+        print(f"Step 1 extraction complete. Identified {len(extracted_problems)} potential problems.")
         
         # Step 2: Collect competitor data for ALL candidates
         candidate_data = []
@@ -131,7 +133,11 @@ def validation_node(raw_data):
             candidate_data.append({"idea": p, "competitors": comp_context})
 
         # Step 3: Single Gemini call to pick top 3
-        if not candidate_data: return []
+        if not candidate_data: 
+            print("No new unique candidates after filtering seen ideas.")
+            return []
+        
+        print(f"Proceeding to step 3 with {len(candidate_data)} candidates...")
         
         full_candidate_text = json.dumps(candidate_data, indent=2)
         validation_prompt = f"""
@@ -146,6 +152,7 @@ def validation_node(raw_data):
             contents=validation_prompt
         )
         text_resp = val_response.text.strip()
+        print(f"Step 3 validation complete. Raw response: {text_resp[:100]}...")
         if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
         elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
         return json.loads(text_resp)[:3]
@@ -187,7 +194,7 @@ def send_email(html_content):
             "html": html_content
         }
         email = resend.Emails.send(params)
-        print("Email sent successfully! ID:", email.get('id', 'Unknown'))
+        print(f"Email sent successfully! ID: {email.get('id', 'Unknown')}")
         return True
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -241,6 +248,7 @@ def main():
         print(f"\n--- Batch Generating Project Files ---")
         from builder import generate_batch_boilerplate
         folders = generate_batch_boilerplate(final_ideas, GEMINI_API_KEY)
+        print(f"Batch generation complete. Created folders: {folders}")
         
         import shutil
         for folder in folders:
