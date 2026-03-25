@@ -205,7 +205,9 @@ def main():
     
     if not all([GEMINI_API_KEY, TAVILY_API_KEY, RESEND_API_KEY]):
         print("Error: Missing required API keys in environment variables.")
-        print("Please ensure GEMINI_API_KEY, TAVILY_API_KEY, and RESEND_API_KEY are set.")
+        if not GEMINI_API_KEY: print("- GEMINI_API_KEY is missing")
+        if not TAVILY_API_KEY: print("- TAVILY_API_KEY is missing")
+        if not RESEND_API_KEY: print("- RESEND_API_KEY is missing")
         return
 
     def send_failure_notification(part, error):
