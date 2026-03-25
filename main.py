@@ -11,6 +11,11 @@ from github_handler import create_github_repo, push_to_github
 # Load environment variables
 load_dotenv()
 
+# Configure API Keys
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+
 if GEMINI_API_KEY:
     client = genai.Client(api_key=GEMINI_API_KEY)
 else:
