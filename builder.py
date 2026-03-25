@@ -29,15 +29,13 @@ def generate_batch_boilerplate(ideas, api_key):
     
     try:
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json',
+            }
         )
         text_resp = response.text.strip()
-        if text_resp.startswith("```json"):
-            text_resp = text_resp[7:-3]
-        elif text_resp.startswith("```"):
-            text_resp = text_resp[3:-3]
-            
         batch_files = json.loads(text_resp)
         generated_folders = []
         

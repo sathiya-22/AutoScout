@@ -110,12 +110,13 @@ def validation_node(raw_data):
         Return JSON list of objects with: problem_statement, why_it_matters, solution_sketch, search_keyword.
         """
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
-            contents=extraction_prompt
+            model='gemini-2.5-flash', 
+            contents=extraction_prompt,
+            config={
+                'response_mime_type': 'application/json',
+            }
         )
         text_resp = response.text.strip()
-        if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
-        elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
         extracted_problems = json.loads(text_resp)
         
         # Step 2: Collect competitor data for ALL candidates
@@ -141,13 +142,22 @@ def validation_node(raw_data):
         Return ONLY a JSON list of the 3 chosen idea objects.
         """
         val_response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=validation_prompt
+            model='gemini-2.5-flash',
+            contents=validation_prompt,
+            config={
+                'response_mime_type': 'application/json',
+            }
         )
         text_resp = val_response.text.strip()
-        if text_resp.startswith("```json"): text_resp = text_resp[7:-3]
-        elif text_resp.startswith("```"): text_resp = text_resp[3:-3]
-        return json.loads(text_resp)[:3]
+        selected_data = json.loads(text_resp)[:3]
+        # Unnest the 'idea' part if it was returned as {"idea": {...}, "competitors": "..."}
+        final_list = []
+        for item in selected_data:
+            if "idea" in item:
+                final_list.append(item["idea"])
+            else:
+                final_list.append(item)
+        return final_list
         
     except Exception as e:
         print(f"Error in batch validation: {e}")
