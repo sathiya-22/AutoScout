@@ -1,5 +1,6 @@
 import os
 import json
+print("--- AutoScout Version 2.0.1 (Corrected API Keys) ---")
 import datetime
 import requests
 from dotenv import load_dotenv
