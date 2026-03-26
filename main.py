@@ -7,6 +7,8 @@ from google import genai
 from tavily import TavilyClient
 import resend
 from github_handler import create_github_repo, push_to_github
+from researcher import scout_arxiv_gaps
+from orchestrator import build_all_projects
 
 # Load environment variables
 load_dotenv()
@@ -97,12 +99,13 @@ def save_seen_ideas(ideas):
     with open(SEEN_IDEAS_FILE, "w") as f:
         json.dump(list(set(seen)), f, indent=4)
 
-def validation_node(raw_data):
+def validation_node(raw_web_data, raw_arxiv_data):
     """Uses Gemini to batch-validate all problems and select the top 3."""
     print("Running batch validation phase...")
     seen_ideas = load_seen_ideas()
     
-    # Step 1: Extract 5 potential problems
+    # Combined context
+    raw_data = f"WEB RESEARCH:\n{raw_web_data}\n\nARXIV RESEARCH:\n{raw_arxiv_data}"
     try:
         extraction_prompt = f"""
         Extract 5 unique, high-friction AI technical problems from these results:
@@ -229,16 +232,18 @@ def main():
             print(f"Failed to send failure email: {e}")
 
     try:
-        raw_research = research_node()
-        if not raw_research:
-            send_failure_notification("Research Phase", "No data found")
+        raw_web_research = research_node()
+        raw_arxiv_research = scout_arxiv_gaps(GEMINI_API_KEY)
+        
+        if not raw_web_research and not raw_arxiv_research:
+            send_failure_notification("Research Phase", "No data found from Web or Arxiv")
             return
     except Exception as e:
         send_failure_notification("Research Phase", str(e))
         return
         
     try:
-        final_ideas = validation_node(raw_research)
+        final_ideas = validation_node(raw_web_research, raw_arxiv_research)
         if not final_ideas:
             print("No valid, unique ideas discovered today.")
             return
@@ -253,11 +258,10 @@ def main():
     batch_name = f"ai_scout_batch_{datetime.date.today().strftime('%Y_%m_%d')}"
     os.makedirs(batch_name, exist_ok=True)
     
-    # Batch Build: Generate all boilerplates in one request
+    # Batch Build: Multi-Agent Startup Team
     try:
-        print(f"\n--- Batch Generating Project Files ---")
-        from builder import generate_batch_boilerplate
-        folders = generate_batch_boilerplate(final_ideas, GEMINI_API_KEY)
+        print(f"\n--- Deploying Multi-Agent Startup Team ---")
+        folders = build_all_projects(final_ideas, GEMINI_API_KEY)
         
         import shutil
         for folder in folders:

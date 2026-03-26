@@ -3,3 +3,6 @@ tavily-python
 resend
 requests
 python-dotenv
+arxiv
+pypdf
+python-slugify
