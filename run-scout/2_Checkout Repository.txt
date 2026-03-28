@@ -1,0 +1,72 @@
+﻿2026-03-28T14:39:35.4845844Z ##[group]Run actions/checkout@v4
+2026-03-28T14:39:35.4846702Z with:
+2026-03-28T14:39:35.4847537Z   token: ***
+2026-03-28T14:39:35.4847999Z   repository: sathiya-22/AutoScout
+2026-03-28T14:39:35.4848504Z   ssh-strict: true
+2026-03-28T14:39:35.4849005Z   ssh-user: git
+2026-03-28T14:39:35.4849429Z   persist-credentials: true
+2026-03-28T14:39:35.4849886Z   clean: true
+2026-03-28T14:39:35.4850305Z   sparse-checkout-cone-mode: true
+2026-03-28T14:39:35.4850799Z   fetch-depth: 1
+2026-03-28T14:39:35.4851202Z   fetch-tags: false
+2026-03-28T14:39:35.4851633Z   show-progress: true
+2026-03-28T14:39:35.4852058Z   lfs: false
+2026-03-28T14:39:35.4852451Z   submodules: false
+2026-03-28T14:39:35.4852872Z   set-safe-directory: true
+2026-03-28T14:39:35.4853596Z ##[endgroup]
+2026-03-28T14:39:35.5920543Z Syncing repository: sathiya-22/AutoScout
+2026-03-28T14:39:35.5922305Z ##[group]Getting Git version info
+2026-03-28T14:39:35.5923043Z Working directory is '/home/runner/work/AutoScout/AutoScout'
+2026-03-28T14:39:35.5924018Z [command]/usr/bin/git version
+2026-03-28T14:39:35.5960779Z git version 2.53.0
+2026-03-28T14:39:35.5986220Z ##[endgroup]
+2026-03-28T14:39:35.6000291Z Temporarily overriding HOME='/home/runner/work/_temp/42a1e80b-5dc8-43a2-a6af-1e0eed5b89db' before making global git config changes
+2026-03-28T14:39:35.6002669Z Adding repository directory to the temporary git global config as a safe directory
+2026-03-28T14:39:35.6013370Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AutoScout/AutoScout
+2026-03-28T14:39:35.6044529Z Deleting the contents of '/home/runner/work/AutoScout/AutoScout'
+2026-03-28T14:39:35.6047665Z ##[group]Initializing the repository
+2026-03-28T14:39:35.6051554Z [command]/usr/bin/git init /home/runner/work/AutoScout/AutoScout
+2026-03-28T14:39:35.6133744Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-03-28T14:39:35.6135209Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-03-28T14:39:35.6136154Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-03-28T14:39:35.6137127Z hint: call:
+2026-03-28T14:39:35.6138111Z hint:
+2026-03-28T14:39:35.6139004Z hint: 	git config --global init.defaultBranch <name>
+2026-03-28T14:39:35.6140026Z hint:
+2026-03-28T14:39:35.6140601Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-03-28T14:39:35.6141500Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-03-28T14:39:35.6142209Z hint:
+2026-03-28T14:39:35.6142740Z hint: 	git branch -m <name>
+2026-03-28T14:39:35.6143204Z hint:
+2026-03-28T14:39:35.6143941Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-03-28T14:39:35.6145384Z Initialized empty Git repository in /home/runner/work/AutoScout/AutoScout/.git/
+2026-03-28T14:39:35.6147226Z [command]/usr/bin/git remote add origin https://github.com/sathiya-22/AutoScout
+2026-03-28T14:39:35.6174571Z ##[endgroup]
+2026-03-28T14:39:35.6175360Z ##[group]Disabling automatic garbage collection
+2026-03-28T14:39:35.6178769Z [command]/usr/bin/git config --local gc.auto 0
+2026-03-28T14:39:35.6205257Z ##[endgroup]
+2026-03-28T14:39:35.6205969Z ##[group]Setting up auth
+2026-03-28T14:39:35.6212167Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-03-28T14:39:35.6242784Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-03-28T14:39:35.6508302Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-03-28T14:39:35.6535236Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-03-28T14:39:35.6743900Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-03-28T14:39:35.6782137Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-03-28T14:39:35.6995222Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-03-28T14:39:35.7028510Z ##[endgroup]
+2026-03-28T14:39:35.7029471Z ##[group]Fetching the repository
+2026-03-28T14:39:35.7036293Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +f8bcc121bb7907fe8493b3e4ee6024d28b878ebe:refs/remotes/origin/main
+2026-03-28T14:39:35.8605712Z From https://github.com/sathiya-22/AutoScout
+2026-03-28T14:39:35.8607426Z  * [new ref]         f8bcc121bb7907fe8493b3e4ee6024d28b878ebe -> origin/main
+2026-03-28T14:39:35.8635181Z ##[endgroup]
+2026-03-28T14:39:35.8636449Z ##[group]Determining the checkout info
+2026-03-28T14:39:35.8638240Z ##[endgroup]
+2026-03-28T14:39:35.8643446Z [command]/usr/bin/git sparse-checkout disable
+2026-03-28T14:39:35.8680150Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-03-28T14:39:35.8705187Z ##[group]Checking out the ref
+2026-03-28T14:39:35.8709838Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-03-28T14:39:35.8763064Z Switched to a new branch 'main'
+2026-03-28T14:39:35.8765594Z branch 'main' set up to track 'origin/main'.
+2026-03-28T14:39:35.8772238Z ##[endgroup]
+2026-03-28T14:39:35.8803455Z [command]/usr/bin/git log -1 --format=%H
+2026-03-28T14:39:35.8824032Z f8bcc121bb7907fe8493b3e4ee6024d28b878ebe

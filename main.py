@@ -21,7 +21,7 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 # Constants
-MODEL_NAME = "gemini-1.5-flash"
+MODEL_NAME = "gemini-2.5-flash"
 TARGET_REPO_NAME = "AutoScout-Lab"
 SEEN_IDEAS_FILE = "seen_ideas.json"
 

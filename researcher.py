@@ -80,9 +80,9 @@ def scout_arxiv_gaps(api_key, query="cs.AI OR cs.LG OR cs.CL"):
     """
     
     try:
-        # Standardizing on gemini-1.5-flash for extraction
+        # Standardizing on gemini-2.5-flash for extraction
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
             config={'response_mime_type': 'application/json'}
         )

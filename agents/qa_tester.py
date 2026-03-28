@@ -13,7 +13,7 @@ def generate_tests(client, idea, files_with_code):
     Return ONLY the python code for the tests using pytest or unittest.
     """
     response = client.models.generate_content(
-        model='gemini-1.5-flash',
+        model='gemini-2.5-flash',
         contents=prompt
     )
     return response.text.strip()

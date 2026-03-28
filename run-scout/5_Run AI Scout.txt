@@ -1,0 +1,25 @@
+﻿2026-03-28T14:39:45.3712711Z ##[group]Run python main.py
+2026-03-28T14:39:45.3713031Z [36;1mpython main.py[0m
+2026-03-28T14:39:45.3741460Z shell: /usr/bin/bash -e {0}
+2026-03-28T14:39:45.3741709Z env:
+2026-03-28T14:39:45.3741959Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-03-28T14:39:45.3742394Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+2026-03-28T14:39:45.3742821Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-03-28T14:39:45.3743195Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-03-28T14:39:45.3743564Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-03-28T14:39:45.3743934Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+2026-03-28T14:39:45.3744547Z   GEMINI_API_KEY: ***
+2026-03-28T14:39:45.3744916Z   TAVILY_API_KEY: ***
+2026-03-28T14:39:45.3745180Z   RESEND_API_KEY: ***
+2026-03-28T14:39:45.3745645Z   GITHUB_TOKEN: ***
+2026-03-28T14:39:45.3745850Z ##[endgroup]
+2026-03-28T14:39:49.7696128Z Starting AutoScout Lab at 2026-03-28 14:39:46.610451...
+2026-03-28T14:39:49.7697421Z Running web research phase...
+2026-03-28T14:39:49.7698016Z Searching Arxiv for: cs.AI OR cs.LG OR cs.CL...
+2026-03-28T14:39:49.7698858Z Downloading and parsing PDF: https://arxiv.org/pdf/2603.25741v1...
+2026-03-28T14:39:49.7699783Z Downloading and parsing PDF: https://arxiv.org/pdf/2603.25740v1...
+2026-03-28T14:39:49.7700690Z Downloading and parsing PDF: https://arxiv.org/pdf/2603.25737v1...
+2026-03-28T14:39:49.7703181Z Error in Arxiv scouting model call: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-28T14:39:49.7705228Z Running batch validation phase...
+2026-03-28T14:39:49.7707323Z Error in batch validation: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-28T14:39:49.7709321Z No valid, unique ideas discovered today.

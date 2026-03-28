@@ -42,7 +42,7 @@ def run_startup_team(idea, api_key):
         if "requirements.txt" not in [f["name"] for f in files_with_code]:
             print("--- [SYSTEM] Generating requirements.txt... ---")
             req_prompt = f"List the python dependencies for this project: {idea['problem_statement']}. Return ONLY the list, one per line."
-            req_resp = client.models.generate_content(model='gemini-1.5-flash', contents=req_prompt)
+            req_resp = client.models.generate_content(model='gemini-2.5-flash', contents=req_prompt)
             with open(os.path.join(folder_name, "requirements.txt"), "w") as f:
                 f.write(req_resp.text.strip())
                 
