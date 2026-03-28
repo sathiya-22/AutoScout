@@ -29,7 +29,11 @@ def run_startup_team(idea, api_key):
                 code = engineer_file(client, idea, file_name, plan['architecture_notes'])
                 files_with_code.append({"name": file_name, "code": code})
                 
-                with open(os.path.join(folder_name, file_name), "w") as f:
+                # Make sure the target directory exists for nested files (like src/main.py)
+                target_path = os.path.join(folder_name, file_name)
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                
+                with open(target_path, "w") as f:
                     f.write(code)
             except Exception as e:
                 print(f"Error implementing {file_name}: {e}")
