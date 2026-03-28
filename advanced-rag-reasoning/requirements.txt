@@ -1,0 +1,5 @@
+langchain==0.0.354 # Or a newer version (for conceptual components)
+openai==1.3.5      # Or a newer version
+chromadb==0.4.19   # Or any other vector DB for practical use (mocked in main.py)
+tiktoken==0.5.2    # For token counting (good practice)
+python-dotenv==1.0.0 # For managing API keys

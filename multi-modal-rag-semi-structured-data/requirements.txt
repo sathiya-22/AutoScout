@@ -1,0 +1,9 @@
+langchain==0.0.354 # For conceptual components (parsers, retrievers)
+openai==1.3.5      # For LLM interactions
+chromadb==0.4.19   # Or any other vector DB for practical use (mocked in main.py)
+pandas==2.1.4      # For processing tabular data
+Pillow==10.1.0     # For basic image handling (e.g., saving dummy images)
+python-dotenv==1.0.0 # For managing API keys
+# pypdf          # If you want to integrate PDF parsing
+# unstructured   # For advanced document parsing
+# pytesseract    # For OCR if integrating Tesseract

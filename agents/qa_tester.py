@@ -8,10 +8,12 @@ def generate_tests(client, idea, files_with_code):
     {context}
     
     The project goal is: {idea['problem_statement']}
-    Return ONLY the python code for the tests.
+    Target implementation: {idea['solution_sketch']}
+    
+    Return ONLY the python code for the tests using pytest or unittest.
     """
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
+        model='gemini-1.5-flash',
         contents=prompt
     )
     return response.text.strip()
