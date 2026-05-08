@@ -9,7 +9,7 @@ from tavily import TavilyClient
 import resend
 from github_handler import create_github_repo, push_to_github, push_project_to_own_repo
 from researcher import scout_arxiv_gaps
-from orchestrator import build_all_projects
+from orchestrator import build_all_projects, synthesize_and_build
 
 # Load environment variables
 load_dotenv()
@@ -214,8 +214,8 @@ def main():
     os.makedirs(batch_name, exist_ok=True)
     
     try:
-        print(f"\n--- [BUILD PHASE] Deploying Multi-Agent Team ---")
-        folders = build_all_projects(final_ideas, GEMINI_API_KEY)
+        print(f"\n--- [BUILD PHASE] Synthesizing & Deploying Multi-Agent Team ---")
+        folders = synthesize_and_build(final_ideas, GEMINI_API_KEY)
         
         for folder in folders:
             if not folder: continue
