@@ -7,4 +7,3 @@ arxiv
 pypdf
 python-slugify
 numpy
-tweepy

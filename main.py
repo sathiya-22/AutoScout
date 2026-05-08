@@ -12,8 +12,7 @@ from researcher import scout_arxiv_gaps
 from orchestrator import synthesize_and_build, build_all_projects
 from memory import is_duplicate, add_to_memory
 from analytics import record_run, get_summary
-from agents.social_poster import post_to_twitter
-from agents.blogger import post_to_devto
+
 
 # ── Load env ──────────────────────────────────────────────────────────────────
 load_dotenv()
@@ -273,29 +272,8 @@ def main():
             fallback_used=fallback_used,
         )
 
-    # PHASE 6: SOCIAL — post to X/Twitter
+    # PHASE 6: NOTIFICATION EMAIL
     devto_url = None
-    if brief and repo_url:
-        try:
-            post_to_twitter(
-                project_title=brief.get("project_title", "New AI Tool"),
-                repo_url=repo_url,
-                unified_problem=brief.get("unified_problem", ""),
-            )
-        except Exception as e:
-            print(f"Twitter post failed: {e}")
-
-        # PHASE 7: BLOG — publish to Dev.to
-        try:
-            devto_url = post_to_devto(
-                project_title=brief.get("project_title", "New AI Tool"),
-                readme_content=readme_content or "",
-                repo_url=repo_url,
-            )
-        except Exception as e:
-            print(f"Dev.to post failed: {e}")
-
-    # PHASE 8: NOTIFICATION EMAIL
     analytics_summary = get_summary()
     html_content = format_html_email(
         final_ideas,
