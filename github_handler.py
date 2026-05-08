@@ -33,6 +33,67 @@ def create_github_repo(repo_name, github_token, description=""):
     else:
         raise Exception(f"Failed to create GitHub repo: {response.status_code} - {response.text}")
 
+def push_project_to_own_repo(folder_name, github_token, description="", source_path=None):
+    """Creates a brand-new repo named after the project and pushes the project
+    folder's CONTENTS (not the folder itself) directly to the repo root.
+
+    Args:
+        folder_name:  Slug used as the GitHub repository name.
+        github_token: Personal access token with repo scope.
+        description:  Short description shown on GitHub.
+        source_path:  Local directory to read files from. Defaults to folder_name.
+    """
+    source = source_path or folder_name
+    print(f"\n--- [DEPLOY] Creating dedicated repo for: {folder_name} ---")
+    repo_url = create_github_repo(folder_name, github_token, description=description)
+
+    temp_dir = f"temp_repo_{folder_name}"
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+
+    try:
+        authenticated_url = repo_url.replace("https://", f"https://{github_token}@")
+        subprocess.run(["git", "clone", authenticated_url, temp_dir], check=True, capture_output=True)
+
+        # Copy project files to repo root (not inside a subfolder)
+        for item in os.listdir(source):
+            src = os.path.join(source, item)
+            dst = os.path.join(temp_dir, item)
+            if os.path.isdir(src):
+                if os.path.exists(dst):
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)
+
+        commands = [
+            ["git", "config", "user.email", "scout-bot@example.com"],
+            ["git", "config", "user.name", "AutoScout Bot"],
+            ["git", "add", "."],
+            ["git", "commit", "-m", "feat: AutoScout generated project [skip ci]"],
+            ["git", "push", "origin", "main"],
+        ]
+
+        for cmd in commands:
+            result = subprocess.run(cmd, cwd=temp_dir, capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Git command failed: {' '.join(cmd)}\nError: {result.stderr}")
+                if "nothing to commit" not in result.stderr:
+                    raise Exception(f"Git error: {result.stderr}")
+
+        # Derive the clean HTTPS URL for display (strip .git and token)
+        clean_url = repo_url.replace(".git", "")
+        print(f"✅ Pushed {folder_name} → {clean_url}")
+        return clean_url
+
+    except Exception as e:
+        print(f"Error pushing {folder_name}: {e}")
+        raise e
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+
+
 def push_to_github(batch_folder, repo_url, github_token):
     """Clones the single target repo, adds the daily batch folder, and pushes."""
     print(f"Pushing {batch_folder} to {repo_url}...")
