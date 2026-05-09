@@ -25,7 +25,7 @@ Be concise and specific. Use a bullet list.
 If the code looks good, respond with exactly: LGTM
 """
     critique = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         contents=critique_prompt,
     ).text.strip()
 
@@ -47,7 +47,7 @@ ORIGINAL CODE:
 Return ONLY the corrected Python code. No markdown fences, no explanations.
 """
     revised = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         contents=revise_prompt,
     ).text.strip()
 

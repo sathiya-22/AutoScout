@@ -9,6 +9,7 @@ from agents.demo_writer import write_demo
 from agents.qa_tester import generate_tests
 from agents.marketer import generate_readme
 from agents.synthesizer import synthesize_ideas
+from utils import gemini_generate
 from google import genai
 
 SYNTHESIS_THRESHOLD = 6  # minimum connection_score to attempt unified build
@@ -54,7 +55,7 @@ Project goal: {idea['problem_statement']}
 Return ONLY the corrected requirements.txt — one valid PyPI package name per line.
 No comments, no version pins unless necessary, no markdown.
 """
-    resp = client.models.generate_content(model="gemini-2.5-flash", contents=fix_prompt)
+    resp = gemini_generate(client, "gemini-2.0-flash", fix_prompt)
     fixed = resp.text.strip()
     if fixed.startswith("```"):
         fixed = "\n".join(fixed.split("\n")[1:])
@@ -113,9 +114,7 @@ def run_startup_team(idea, client):
                 f"{idea['problem_statement']}. "
                 f"Return ONLY valid PyPI package names, one per line."
             )
-            req_resp = client.models.generate_content(
-                model="gemini-2.5-flash", contents=req_prompt
-            )
+            req_resp = gemini_generate(client, "gemini-2.0-flash", req_prompt)
             with open(os.path.join(folder_name, "requirements.txt"), "w") as f:
                 f.write(req_resp.text.strip())
 

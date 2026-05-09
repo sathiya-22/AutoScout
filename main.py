@@ -12,6 +12,7 @@ from researcher import scout_arxiv_gaps
 from orchestrator import synthesize_and_build, build_all_projects
 from memory import is_duplicate, add_to_memory
 from analytics import record_run, get_summary
+from utils import gemini_generate
 
 
 # ── Load env ──────────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ TAVILY_API_KEY  = os.getenv("TAVILY_API_KEY")
 RESEND_API_KEY  = os.getenv("RESEND_API_KEY")
 GITHUB_TOKEN    = os.getenv("GITHUB_TOKEN")
 
-MODEL_NAME      = "gemini-2.5-flash"
+MODEL_NAME      = "gemini-2.0-flash"
 SEEN_IDEAS_FILE = "seen_ideas.json"   # kept for legacy commits in GH Actions
 
 if GEMINI_API_KEY:
@@ -100,9 +101,8 @@ def validation_node(raw_web_data, raw_arxiv_data):
         {raw_data}
         Return JSON list of objects with: problem_statement, why_it_matters, solution_sketch, search_keyword.
         """
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=extraction_prompt,
+        response = gemini_generate(
+            client, MODEL_NAME, extraction_prompt,
             config={"response_mime_type": "application/json"},
         )
         extracted_problems = json.loads(response.text.strip())
@@ -131,9 +131,8 @@ def validation_node(raw_web_data, raw_arxiv_data):
         Pick the TOP 3 that are most unique and underserved technically.
         Return ONLY a JSON list of the 3 chosen idea objects.
         """
-        val_response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=validation_prompt,
+        val_response = gemini_generate(
+            client, MODEL_NAME, validation_prompt,
             config={"response_mime_type": "application/json"},
         )
         selected_data = json.loads(val_response.text.strip())[:3]
