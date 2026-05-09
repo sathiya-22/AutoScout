@@ -140,3 +140,72 @@ def push_to_github(batch_folder, repo_url, github_token):
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+
+def update_existing_repo(repo_name, github_token, file_name, new_code, commit_msg):
+    """Clone an existing repo, update one file, and push the commit."""
+    import os, shutil, subprocess
+
+    print(f"\n--- [UPDATE] {repo_name} → {file_name} ---")
+    temp_dir = f"temp_update_{repo_name}"
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+
+    # Derive repo URL from GitHub username
+    username = _get_github_username(github_token)
+    if not username:
+        print(f"  Could not resolve GitHub username — skipping {repo_name}")
+        return False
+
+    repo_url = f"https://{github_token}@github.com/{username}/{repo_name}.git"
+
+    try:
+        subprocess.run(["git", "clone", repo_url, temp_dir],
+                       check=True, capture_output=True)
+
+        file_path = os.path.join(temp_dir, file_name)
+        if not os.path.exists(file_path):
+            print(f"  {file_name} not found in {repo_name} — skipping")
+            return False
+
+        with open(file_path, "w") as f:
+            f.write(new_code)
+
+        commands = [
+            ["git", "config", "user.email", "scout-bot@example.com"],
+            ["git", "config", "user.name", "AutoScout Bot"],
+            ["git", "add", file_name],
+            ["git", "commit", "-m", commit_msg],
+            ["git", "push", "origin", "main"],
+        ]
+        for cmd in commands:
+            result = subprocess.run(cmd, cwd=temp_dir, capture_output=True, text=True)
+            if result.returncode != 0:
+                if "nothing to commit" in result.stderr:
+                    print(f"  No changes detected in {file_name} — skipping commit")
+                    return False
+                raise Exception(f"Git error: {result.stderr}")
+
+        print(f"  ✅ Updated {repo_name}/{file_name}: {commit_msg}")
+        return True
+
+    except Exception as e:
+        print(f"  Update failed for {repo_name}: {e}")
+        return False
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+
+
+def _get_github_username(token):
+    """Resolve the GitHub username for a given token."""
+    import requests
+    try:
+        r = requests.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"token {token}"},
+            timeout=10,
+        )
+        return r.json().get("login")
+    except Exception:
+        return None

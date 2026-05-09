@@ -7,12 +7,13 @@ from google import genai
 from tavily import TavilyClient
 import resend
 
-from github_handler import push_project_to_own_repo
+from github_handler import push_project_to_own_repo, update_existing_repo
 from researcher import scout_arxiv_gaps
 from orchestrator import synthesize_and_build, build_all_projects
 from memory import is_duplicate, add_to_memory
 from analytics import record_run, get_summary
 from utils import gemini_generate
+from agents.updater import generate_improvement
 
 
 # ── Load env ──────────────────────────────────────────────────────────────────
@@ -201,6 +202,89 @@ def send_email(html_content, subject=None):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+UPDATE_WINDOW_DAYS = 7   # how many past repos to update each day
+
+
+def _run_update_phase(github_token):
+    """Update the last N repos built by AutoScout with one improvement each."""
+    analytics = load_analytics() if callable(load_analytics) else []
+    # load_analytics is imported from analytics module
+    from analytics import load_analytics as _load
+    analytics = _load()
+
+    # Pick the last UPDATE_WINDOW_DAYS entries that have a repo_url
+    recent = [a for a in analytics if a.get("repo_url") and a.get("project_name")]
+    targets = recent[-UPDATE_WINDOW_DAYS:]
+
+    if not targets:
+        print("\n--- [UPDATE PHASE] No past repos to update yet ---")
+        return
+
+    print(f"\n--- [UPDATE PHASE] Updating {len(targets)} existing repo(s) ---")
+    gemini_client = client  # module-level client
+
+    for entry in targets:
+        repo_name = entry["project_name"]
+        context   = entry.get("project_title", repo_name)
+        try:
+            # Fetch the main source file from GitHub to improve
+            username = _fetch_username(github_token)
+            if not username:
+                continue
+
+            import requests as _req
+            api_url = f"https://api.github.com/repos/{username}/{repo_name}/contents"
+            headers = {"Authorization": f"token {github_token}"}
+            resp = _req.get(api_url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                print(f"  Could not list {repo_name} contents — skipping")
+                continue
+
+            # Pick the most meaningful Python file to improve
+            files = [f["name"] for f in resp.json()
+                     if f["name"].endswith(".py")
+                     and f["name"] not in ("demo.py", "tests.py")]
+            if not files:
+                continue
+            # Prefer main.py or the first non-boilerplate file
+            target_file = next((f for f in files if "main" in f), files[0])
+
+            # Fetch file content
+            file_resp = _req.get(
+                f"https://api.github.com/repos/{username}/{repo_name}/contents/{target_file}",
+                headers=headers, timeout=10,
+            )
+            if file_resp.status_code != 200:
+                continue
+
+            import base64
+            current_code = base64.b64decode(
+                file_resp.json()["content"]
+            ).decode("utf-8", errors="replace")
+
+            # Generate improvement
+            new_code, commit_msg = generate_improvement(
+                gemini_client, target_file, current_code, context
+            )
+
+            # Push update
+            update_existing_repo(repo_name, github_token, target_file, new_code, commit_msg)
+
+        except Exception as e:
+            print(f"  Update error for {repo_name}: {e}")
+
+
+def _fetch_username(token):
+    """Cache-friendly GitHub username lookup."""
+    import requests as _req
+    try:
+        r = _req.get("https://api.github.com/user",
+                     headers={"Authorization": f"token {token}"}, timeout=10)
+        return r.json().get("login")
+    except Exception:
+        return None
+
+
 def main():
     print(f"Starting AutoScout Lab at {datetime.datetime.now()}...")
 
@@ -271,7 +355,11 @@ def main():
             fallback_used=fallback_used,
         )
 
-    # PHASE 6: NOTIFICATION EMAIL
+    # PHASE 6: UPDATE EXISTING REPOS (last 7 days of builds)
+    if GITHUB_TOKEN:
+        _run_update_phase(GITHUB_TOKEN)
+
+    # PHASE 7: NOTIFICATION EMAIL
     devto_url = None
     analytics_summary = get_summary()
     html_content = format_html_email(
