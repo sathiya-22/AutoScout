@@ -24,7 +24,7 @@ TAVILY_API_KEY  = os.getenv("TAVILY_API_KEY")
 RESEND_API_KEY  = os.getenv("RESEND_API_KEY")
 GITHUB_TOKEN    = os.getenv("GITHUB_TOKEN")
 
-MODEL_NAME      = "gemini-2.0-flash"
+MODEL_NAME      = "gemini-1.5-flash"
 SEEN_IDEAS_FILE = "seen_ideas.json"   # kept for legacy commits in GH Actions
 
 if GEMINI_API_KEY:
@@ -313,46 +313,49 @@ def main():
         print(f"Validation Phase failed: {e}")
         return
 
-    # PHASE 3: SYNTHESIS + BUILD
+    # PHASE 3: BUILD — 3 separate projects, one repo each
     batch_name = f"ai_scout_batch_{datetime.date.today().strftime('%Y_%m_%d')}"
     os.makedirs(batch_name, exist_ok=True)
 
-    folder = readme_content = brief = None
-    fallback_used = False
+    folders = []
     try:
-        folder, readme_content, brief, fallback_used = synthesize_and_build(
-            final_ideas, GEMINI_API_KEY
-        )
-        if folder:
-            target_path = os.path.join(batch_name, folder)
-            if os.path.exists(target_path):
-                shutil.rmtree(target_path)
-            shutil.move(folder, batch_name)
+        folders = build_all_projects(final_ideas, GEMINI_API_KEY)
+        for folder in folders:
+            if folder and os.path.exists(folder):
+                target = os.path.join(batch_name, folder)
+                if os.path.exists(target):
+                    shutil.rmtree(target)
+                shutil.move(folder, batch_name)
     except Exception as e:
         print(f"Build Phase failed: {e}")
 
-    # PHASE 4: DEPLOYMENT — one dedicated repo
-    repo_url = None
-    if GITHUB_TOKEN and folder and brief:
-        try:
-            source_path = os.path.join(batch_name, folder)
-            repo_url = push_project_to_own_repo(
-                brief.get("project_name", folder),
-                GITHUB_TOKEN,
-                description=f"AutoScout: {brief.get('project_title', '')}",
-                source_path=source_path,
-            )
-        except Exception as e:
-            print(f"GitHub Deployment failed: {e}")
+    # PHASE 4: DEPLOYMENT — one repo per project
+    repo_urls = []
+    if GITHUB_TOKEN:
+        for folder, idea in zip(folders, final_ideas):
+            if not folder:
+                repo_urls.append(None)
+                continue
+            try:
+                source_path = os.path.join(batch_name, folder)
+                url = push_project_to_own_repo(
+                    folder, GITHUB_TOKEN,
+                    description=f"AutoScout: {idea.get('search_keyword', folder)}",
+                    source_path=source_path,
+                )
+                repo_urls.append(url)
+            except Exception as e:
+                print(f"Deploy failed for {folder}: {e}")
+                repo_urls.append(None)
 
     # PHASE 5: ANALYTICS
-    if brief:
+    for idea, url in zip(final_ideas, repo_urls or [None] * len(final_ideas)):
         record_run(
-            project_name=brief.get("project_name", folder or "unknown"),
-            project_title=brief.get("project_title", ""),
-            connection_score=brief.get("connection_score", 0),
-            repo_url=repo_url,
-            fallback_used=fallback_used,
+            project_name=idea.get("search_keyword", "unknown"),
+            project_title=idea.get("search_keyword", ""),
+            connection_score=10,
+            repo_url=url,
+            fallback_used=False,
         )
 
     # PHASE 6: UPDATE EXISTING REPOS (last 7 days of builds)
@@ -360,28 +363,25 @@ def main():
         _run_update_phase(GITHUB_TOKEN)
 
     # PHASE 7: NOTIFICATION EMAIL
-    devto_url = None
     analytics_summary = get_summary()
     html_content = format_html_email(
         final_ideas,
-        repo_url=repo_url,
-        devto_url=devto_url,
+        repo_url=repo_urls[0] if repo_urls else None,
+        devto_url=None,
         analytics_summary=analytics_summary,
     )
     if send_email(html_content):
-        # Persist ideas to both semantic memory and legacy string list
         for idea in final_ideas:
             add_to_memory(
                 client,
                 idea["problem_statement"],
-                project_name=brief.get("project_name", "") if brief else "",
-                connection_score=brief.get("connection_score") if brief else None,
+                project_name=idea.get("search_keyword", ""),
+                connection_score=10,
             )
         save_seen_ideas([idea["problem_statement"] for idea in final_ideas])
         print("AutoScout run completed successfully.")
         print(f"📊 {analytics_summary}")
 
-    # Cleanup local batch folder
     if os.path.exists(batch_name):
         shutil.rmtree(batch_name)
 

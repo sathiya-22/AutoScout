@@ -28,7 +28,7 @@ Write a demo.py that:
 Return ONLY the Python code. No markdown fences.
 """
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-1.5-flash",
         contents=prompt,
     )
     code = response.text.strip()

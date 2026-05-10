@@ -29,7 +29,7 @@ def generate_batch_boilerplate(ideas, api_key):
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             contents=prompt,
             config={
                 'response_mime_type': 'application/json',
