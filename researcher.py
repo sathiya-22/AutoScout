@@ -67,7 +67,7 @@ Return a JSON list of objects with:
     client = genai.Client(api_key=api_key)
     try:
         response = gemini_generate(
-            client, "gemini-1.5-flash", prompt,
+            client, "gemini-2.0-flash", prompt,
             config={"response_mime_type": "application/json"},
         )
         return response.text

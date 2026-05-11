@@ -24,7 +24,7 @@ TAVILY_API_KEY  = os.getenv("TAVILY_API_KEY")
 RESEND_API_KEY  = os.getenv("RESEND_API_KEY")
 GITHUB_TOKEN    = os.getenv("GITHUB_TOKEN")
 
-MODEL_NAME      = "gemini-1.5-flash"
+MODEL_NAME      = "gemini-2.0-flash"
 SEEN_IDEAS_FILE = "seen_ideas.json"   # kept for legacy commits in GH Actions
 
 if GEMINI_API_KEY:
